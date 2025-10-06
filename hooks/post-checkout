@@ -2,21 +2,26 @@
 
 set -Eefu -o pipefail
 
-echo "--- Merge commit plugin"
-
 echo "Original commit:"
 git --no-pager log -n 1
 
 if [[ "${BUILDKITE_PULL_REQUEST:?}" == "false" ]]; then
-    echo "This is not a pull request."
+  echo "--- :github: Not a pull-request, building straight from the commit"
+  echo "This is not a pull request."
 else
-    echo "This is a pull request."
-    echo "Pull request number: ${BUILDKITE_PULL_REQUEST:?}"
-    sleep 3 # Give GitHub a few seconds to create the merge commit.
-    echo "Fetching the merge commit from origin"
-    git fetch origin "+refs/pull/${BUILDKITE_PULL_REQUEST:?}/merge"
-    echo "Checking out the merge commit"
-    git checkout --force FETCH_HEAD
-    echo "The merge commit is:"
-    git --no-pager log -n 1
+  echo "--- :github: Pull Request, checking out merge commit"
+  echo "Pull request number: ${BUILDKITE_PULL_REQUEST:?}"
+  sleep 3 # Give GitHub a few seconds to create the merge commit.
+  echo "Fetching the merge commit from origin"
+  git fetch origin "+refs/pull/${BUILDKITE_PULL_REQUEST:?}/merge"
+  echo "Checking out the merge commit"
+  git checkout --force FETCH_HEAD
+  echo "The merge commit is:"
+  git --no-pager log -n 1
+
+  if ! git --no-pager log -n 1 | grep ${BUILDKITE_COMMIT} ; then 
+    echo "+++ :red_circle: Pull Request is in conflict state, rejecting build"
+    echo ":arrow_right: please checkout the branch and fix the conflict"
+    exit 1
+  fi
 fi

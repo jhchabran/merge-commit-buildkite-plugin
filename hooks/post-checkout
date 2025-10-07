@@ -19,7 +19,7 @@ else
   echo "The merge commit is:"
   git --no-pager log -n 1
 
-  if ! git --no-pager log -n 1 | grep ${BUILDKITE_COMMIT} ; then 
+  if ! git --no-pager log --format="%H %s" -n 50 | grep ${BUILDKITE_COMMIT} ; then 
     echo "+++ :red_circle: Pull Request is in conflict state, rejecting build"
     echo ":arrow_right: please checkout the branch and fix the conflict"
     buildkite-agent annotate --style 'error' 'The pull request that triggered the build has merge conflicts, please fix them. Cannot start the pipeline until it then.'
